@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Deep Learning BiLSTM Sentiment Analysis Application - Real-time Sentiment Classifier">
+    <title>SentimentAI | BiLSTM Review Analysis</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+        <div class="globe globe-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-brain-circuit"></i>
+                </div>
+                <div>
+                    <h1>SentimentAI Analyzer</h1>
+                    <p class="subtitle">Powered by BiLSTM Deep Neural Network</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="modelInfoBtn" class="btn btn-outline" title="View Model Architecture Specs">
+                    <i class="fa-solid fa-circle-info"></i> Model Specs
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <main class="main-content">
+            <!-- Left Column: Input & Controls -->
+            <section class="card input-card">
+                <div class="card-header">
+                    <h2><i class="fa-regular fa-pen-to-square"></i> Review Input</h2>
+                    <div class="mode-tabs">
+                        <button id="tabSingle" class="tab-btn active"><i class="fa-solid fa-align-left"></i> Single Review</button>
+                        <button id="tabBatch" class="tab-btn"><i class="fa-solid fa-list-check"></i> Batch Reviews</button>
+                    </div>
+                </div>
+
+                <!-- Single Review Input View -->
+                <div id="singleInputView" class="input-view active">
+                    <label for="reviewInput" class="input-label">Enter review text below:</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="reviewInput" id="reviewTextarea" placeholder="Type or paste review here (e.g., 'The customer service was outstanding and the quality surpassed my expectations!')..." rows="5"></textarea>
+                        <div class="textarea-footer">
+                            <span id="charCounter" class="counter-badge">0 characters</span>
+                            <button id="clearBtn" class="btn-text" title="Clear text"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                        </div>
+                    </div>
+
+
+                    <button id="analyzeBtn" class="btn btn-primary btn-large">
+                        <i class="fa-solid fa-paper-plane"></i> Analyze Sentiment
+                    </button>
+                </div>
+
+                <!-- Batch Input View -->
+                <div id="batchInputView" class="input-view">
+                    <label for="batchInput" class="input-label">Enter multiple reviews (one per line):</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="batchInput" placeholder="Review 1: Amazing product!&#10;Review 2: Waste of money, broke on day one.&#10;Review 3: It works fine." rows="7"></textarea>
+                    </div>
+                    <button id="batchAnalyzeBtn" class="btn btn-primary btn-large">
+                        <i class="fa-solid fa-layer-group"></i> Analyze Batch (0 items)
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Column: Results & Analytics -->
+            <section class="card results-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Prediction Results</h2>
+                    <span id="statusBadge" class="status-indicator ready"><i class="fa-solid fa-circle"></i> Model Ready</span>
+                </div>
+
+                <!-- Placeholder State -->
+                <div id="resultPlaceholder" class="placeholder-container">
+                    <div class="placeholder-icon">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <h3>No Analysis Executed</h3>
+                    <p>Enter text on the left and click <strong>Analyze Sentiment</strong> to view deep learning predictions and confidence score.</p>
+                </div>
+
+                <!-- Active Single Result State -->
+                <div id="resultContent" class="result-content hidden">
+                    <!-- Main Outcome Badge -->
+                    <div id="sentimentBanner" class="sentiment-banner positive">
+                        <div class="banner-icon">
+                            <i id="sentimentIcon" class="fa-solid fa-face-smile"></i>
+                        </div>
+                        <div class="banner-text">
+                            <span class="banner-label">Predicted Sentiment</span>
+                            <h3 id="sentimentValue">Positive</h3>
+                        </div>
+                        <div class="confidence-box">
+                            <span class="conf-label">Confidence</span>
+                            <span id="confidenceValue" class="conf-percentage">98.5%</span>
+                        </div>
+                    </div>
+
+                    <!-- Analyzed Text Display -->
+                    <div class="analyzed-text-container">
+                        <h4><i class="fa-solid fa-quote-left"></i> Analyzed Review:</h4>
+                        <p id="analyzedTextQuote" class="text-quote">"..."</p>
+                    </div>
+
+                    <!-- Probabilities Breakdown Bars -->
+                    <div class="probabilities-container">
+                        <h4>Class Probability Breakdown</h4>
+
+                        <div class="prob-row">
+                            <div class="prob-header">
+                                <span><i class="fa-solid fa-face-frown text-negative"></i> Negative</span>
+                                <span id="probNegVal" class="prob-val">0.0%</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="probNegBar" class="progress-bar-fill neg-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="prob-row">
+                            <div class="prob-header">
+                                <span><i class="fa-solid fa-face-meh text-neutral"></i> Neutral</span>
+                                <span id="probNeuVal" class="prob-val">0.0%</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="probNeuBar" class="progress-bar-fill neu-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="prob-row">
+                            <div class="prob-header">
+                                <span><i class="fa-solid fa-face-smile text-positive"></i> Positive</span>
+                                <span id="probPosVal" class="prob-val">0.0%</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="probPosBar" class="progress-bar-fill pos-bar" style="width: 0%;"></div>
+                            </div>
+                    </div>
+
+                    <!-- Internal Preprocessing Steps Collapsible -->
+                    <details id="prepDetails" class="prep-details">
+                        <summary class="prep-summary">
+                            <i class="fa-solid fa-wrench"></i> View Internal Preprocessing Steps
+                        </summary>
+                        <div class="prep-body">
+                            <div class="prep-item">
+                                <span class="prep-label">Cleaned Input Text:</span>
+                                <p id="prepCleanedText" class="prep-code-text">...</p>
+                            </div>
+
+                            <div class="prep-item">
+                                <span class="prep-label">Sequence Tokens (First 20):</span>
+                                <div id="prepTokensList" class="prep-tokens-box">
+                                    [ ]
+                                </div>
+                            </div>
+
+                            <div class="prep-item prep-inline">
+                                <span class="prep-label">Total Words Tokenized:</span>
+                                <span id="prepTokenCount" class="token-count-badge">0</span>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Batch Result State -->
+                <div id="batchResultContent" class="batch-results-content hidden">
+                    <div id="batchList" class="batch-list">
+                        <!-- Batch items will be rendered here dynamically -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- History Log Section -->
+        <section class="card history-card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Analysis History Log</h2>
+                <button id="clearHistoryBtn" class="btn-text danger"><i class="fa-solid fa-trash"></i> Clear History</button>
+            </div>
+            <div id="historyList" class="history-list">
+                <div class="empty-history">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <p>No past analysis log yet.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BiLSTM Neural Network Architecture &bull; Built with TensorFlow & Flask</p>
+        </footer>
+    </div>
+
+    <!-- Model Spec Modal -->
+    <div id="modelModal" class="modal">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-microchip"></i> BiLSTM Model Specifications</h3>
+                <button id="closeModalBtn" class="btn-text modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <span class="spec-label">Architecture</span>
+                        <span class="spec-val">Bidirectional LSTM (BiLSTM)</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Input Sequence Length</span>
+                        <span id="specSeqLen" class="spec-val">150 tokens</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Target Classes</span>
+                        <span id="specClasses" class="spec-val">Negative, Neutral, Positive</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Padding Strategy</span>
+                        <span class="spec-val">Post-padding / Post-truncating</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Vocabulary Size</span>
+                        <span id="specVocab" class="spec-val">Loading...</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Backend Engine</span>
+                        <span class="spec-val">TensorFlow Keras 2.x</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
